@@ -17,6 +17,13 @@ func getenv(name string, defval string) string {
 	return defval
 }
 
+func logenv(name string) {
+	value := os.Getenv(name)
+	if len(strings.TrimSpace(value)) > 0 {
+		log.Println(name, value)
+	}
+}
+
 func withext(ext string) (string, error) {
 	exe, err := os.Executable()
 	if err != nil {

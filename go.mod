@@ -6,6 +6,7 @@ require (
 	github.com/gin-gonic/gin v1.7.4
 	github.com/stretchr/testify v1.7.0
 	github.com/toorop/go-dkim v0.0.0-20201103131630-e1cd1a0a5208
+	golang.org/x/net v0.0.0-20210226172049-e18ecbb05110
 	gorm.io/driver/postgres v1.1.2
 	gorm.io/driver/sqlite v1.1.5
 	gorm.io/gorm v1.21.15

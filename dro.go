@@ -13,7 +13,7 @@ type DomainDro struct {
 }
 
 type MessageDro struct {
-	ID      string
+	Mid     string `gorm:"primaryKey"`
 	From    string
 	To      string
 	Subject string
@@ -23,7 +23,7 @@ type MessageDro struct {
 }
 
 type AttemptDro struct {
-	ID      string
+	Mid     string
 	Created time.Time
 	Result  string
 }

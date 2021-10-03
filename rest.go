@@ -7,6 +7,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -21,7 +22,7 @@ func rest(dao Dao, endpoint string, hostname string) (func(), error) {
 		key := http.CanonicalHeaderKey(name)
 		values := r.Header[key]
 		if len(values) != 1 {
-			return "", fmt.Errorf("invalid header %s %v", name, values)
+			return "", fmt.Errorf("invalid header %s %v", key, values)
 		}
 		return values[0], nil
 	}
@@ -73,6 +74,24 @@ func rest(dao Dao, endpoint string, hostname string) (func(), error) {
 			"pub":  dro.PublicKey,
 			"key":  dro.PrivateKey,
 		})
+	})
+	rapi.GET("/domain/:name/pub", func(c *gin.Context) {
+		name := c.Param("name")
+		dro, err := dao.GetDomain(name)
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		var b strings.Builder
+		var lines = strings.Split(dro.PublicKey, "\n")
+		for _, line := range lines {
+			if strings.Contains(line, "-") {
+				continue
+			}
+			trimmed := strings.TrimSpace(line)
+			b.WriteString(trimmed)
+		}
+		c.Data(200, "text/plain; charset=utf-8", []byte(b.String()))
 	})
 	rapi.GET("/domain", func(c *gin.Context) {
 		names, err := dao.GetDomains()

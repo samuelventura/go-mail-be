@@ -21,8 +21,11 @@ import (
 	"io"
 	"net"
 	"net/textproto"
+	"os"
 	"strings"
 	"time"
+
+	"golang.org/x/net/proxy"
 )
 
 // A Client represents a client connection to an SMTP server.
@@ -48,6 +51,20 @@ type Client struct {
 // smtpDial returns a new Client connected to an SMTP server at addr.
 // The addr must include a port, as in "mail.example.com:smtp".
 func smtpDial(addr string) (*Client, error) {
+	socks := os.Getenv("MAIL_SOCKS")
+	if len(socks) > 0 {
+		//no timeout support, for testing purposes only
+		dialer, err := proxy.SOCKS5("tcp", socks, nil, proxy.Direct)
+		if err != nil {
+			return nil, err
+		}
+		conn, err := dialer.Dial("tcp", addr)
+		if err != nil {
+			return nil, err
+		}
+		host, _, _ := net.SplitHostPort(addr)
+		return NewClient(conn, host)
+	}
 	conn, err := net.DialTimeout("tcp", addr, 10*time.Second)
 	if err != nil {
 		return nil, err

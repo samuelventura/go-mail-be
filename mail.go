@@ -15,7 +15,7 @@ import (
 //dig google.com MX
 
 func mailSend(dao Dao, id string, from string, to string, subject string, mime string, body string) error {
-	mdro := &MessageDro{ID: id,
+	mdro := &MessageDro{Mid: id,
 		From: from, To: to,
 		Subject: subject, Mime: mime,
 		Body: body, Created: time.Now()}
@@ -52,14 +52,13 @@ func mailSend(dao Dao, id string, from string, to string, subject string, mime s
 	})
 	mxsn := make([]string, 0, len(mxs))
 	for _, x := range mxs {
-		//log.Println(x.Host, x.Pref)
 		mxsn = append(mxsn, x.Host)
 		addr := fmt.Sprintf("%s:25", x.Host)
 		dial := false
 		err = smtpSend(addr, fromAddress.Address,
 			[]string{toAddress.Address}, email, &dial)
 		result := fmt.Sprintf("host:%s dial:%v error:%v", x.Host, dial, err)
-		adro := &AttemptDro{ID: id, Created: time.Now(), Result: result}
+		adro := &AttemptDro{Mid: id, Created: time.Now(), Result: result}
 		err2 := dao.AddAttempt(adro)
 		if err2 != nil {
 			return err2
@@ -67,9 +66,7 @@ func mailSend(dao Dao, id string, from string, to string, subject string, mime s
 		if dial {
 			continue
 		}
-		if err != nil {
-			return err
-		}
+		return err
 	}
 	return fmt.Errorf("no working mx %v", mxsn)
 }
