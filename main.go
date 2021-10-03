@@ -20,6 +20,15 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	dao.Close()
+	defer dao.Close()
+	// pub, key, err := keygen()
+	// if err != nil {
+	// 	return err
+	// }
+	// dao.AddDomain("laurelview.io", string(pub), string(key))
+	err = sendText(dao, "samuel@laurelview.io", "samuel.ventura@yeico.com", "go dkim test", "this is a test!")
+	if err != nil {
+		return err
+	}
 	return nil
 }

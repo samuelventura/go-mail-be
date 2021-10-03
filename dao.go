@@ -15,6 +15,7 @@ type daoDso struct {
 type Dao interface {
 	Close() error
 	AddDomain(name string, privkey string, pubkey string) error
+	GetDomainPrivateKey(name string) (*DomainDro, error)
 }
 
 func Dialector(driver string, source string) (gorm.Dialector, error) {
@@ -56,8 +57,14 @@ func (dso *daoDso) Close() error {
 	return nil
 }
 
-func (dso *daoDso) AddDomain(name string, privkey string, pubkey string) error {
+func (dso *daoDso) AddDomain(name string, pubkey string, privkey string) error {
 	row := &DomainDro{Name: name, PrivateKey: privkey, PublicKey: pubkey}
 	result := dso.db.Create(row)
 	return result.Error
+}
+
+func (dso *daoDso) GetDomainPrivateKey(name string) (*DomainDro, error) {
+	row := &DomainDro{}
+	result := dso.db.Where("name = ?", name).First(row)
+	return row, result.Error
 }
