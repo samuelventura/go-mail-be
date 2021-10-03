@@ -1,36 +1,61 @@
 package main
 
 import (
+	"io/ioutil"
 	"log"
+	"os"
+	"os/signal"
 )
 
 func main() {
-	err := run()
+	log.SetFlags(log.LstdFlags | log.Lmicroseconds)
+	log.SetOutput(os.Stdout)
+
+	ctrlc := make(chan os.Signal, 1)
+	signal.Notify(ctrlc, os.Interrupt)
+
+	log.Println("starting...")
+	defer log.Println("exit")
+	closer, err := run()
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer closer()
+
+	exit := make(chan interface{})
+	go func() {
+		defer close(exit)
+		ioutil.ReadAll(os.Stdin)
+	}()
+	select {
+	case <-ctrlc:
+	case <-exit:
+	}
 }
 
-func run() error {
+func run() (func(), error) {
 	srcdef, err := withext("db3")
 	if err != nil {
-		return err
+		return nil, err
 	}
+	//FIXME gorm setup logging
+	//FIXME gin setup logging
 	driver := getenv("MAIL_DB_DRIVER", "sqlite")
 	source := getenv("MAIL_DB_SOURCE", srcdef)
+	endpoint := getenv("MAIL_ENDPOINT", "127.0.0.1:31650")
 	dao, err := NewDao(driver, source)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	defer dao.Close()
-	// pub, key, err := keygen()
-	// if err != nil {
-	// 	return err
-	// }
-	//dao.AddDomain("laurelview.io", string(pub), string(key))
-	err = sendText(dao, "samuel@laurelview.io", "samuel.ventura@yeico.com", "go dkim test", "this is a test!")
+	closer, err := rest(dao, endpoint)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return func() {
+		closer()
+		err := dao.Close()
+		if err != nil {
+			log.Println(err)
+		}
+	}, nil
 }

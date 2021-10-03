@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -9,8 +10,10 @@ import (
 func getenv(name string, defval string) string {
 	value := os.Getenv(name)
 	if len(strings.TrimSpace(value)) > 0 {
+		log.Println(name, value)
 		return value
 	}
+	log.Println(name, defval)
 	return defval
 }
 

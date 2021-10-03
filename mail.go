@@ -28,7 +28,7 @@ func sendEmail(dao Dao, from string, to string, subject string, mime string, bod
 	}
 	toDomain := strings.Split(toAddress.Address, "@")[1]
 	fromDomain := strings.Split(fromAddress.Address, "@")[1]
-	fromDomainDro, err := dao.GetDomainPrivateKey(fromDomain)
+	fromDomainDro, err := dao.GetDomain(fromDomain)
 	if err != nil {
 		return err
 	}

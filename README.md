@@ -8,9 +8,21 @@ Send only mailer with REST API
 
 ## api
 
+```bash
+# add domain
+curl -X POST http://127.0.0.1:31650/api/domain/domain.tld
+# show domain
+curl -X GET http://127.0.0.1:31650/api/domain/domain.tld
+# delete domain
+curl -X DELETE http://127.0.0.1:31650/api/domain/domain.tld
+# list domain names
+curl -X GET http://127.0.0.1:31650/api/domain
+```
+
 ### post message
 
 ```bash
+ssh -L 23
 curl -H "Mail-From: i@i.com" -H "Mail-To: u@u.com" -X POST --data 'email body' http://localhost:port/message
 ```
 
@@ -23,37 +35,9 @@ curl -H "Mail-From: i@i.com" -H "Mail-To: u@u.com" -X POST --data 'email body' h
   - text/plain; charset=UTF-8
   - text/html; charset=UTF-8
 
-### show message
-
-```bash
-curl -X GET http://localhost:port/message/{id}/body
-curl -X GET http://localhost:port/message/{id}/status
-```
-
-### add domain
-
-```bash
-curl -X POST http://localhost:port/domain/{domain}
-```
-
-### remove domain
-
-```bash
-curl -X DELETE http://localhost:port/domain/{domain}
-```
-
-### show domain
-
-```bash
-curl -X GET http://localhost:port/domain/{domain}
-```
-
-### list domains
-
-```bash
-curl -X GET http://localhost:port/domain/
-```
-
 ## linux
 
+```bash
+#for go-sqlite
 sudo apt install build-essential
+```
