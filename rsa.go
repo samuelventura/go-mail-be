@@ -7,6 +7,7 @@ import (
 	"encoding/pem"
 )
 
+//https://dkimcore.org/tools/
 func keygen() ([]byte, []byte, error) {
 	//1024 to feet the 255 TXT record length
 	key, err := rsa.GenerateKey(rand.Reader, 1024)
@@ -14,16 +15,20 @@ func keygen() ([]byte, []byte, error) {
 		return nil, nil, err
 	}
 	pub := key.Public()
+	pubBytes, err := x509.MarshalPKIXPublicKey(pub.(*rsa.PublicKey))
+	if err != nil {
+		return nil, nil, err
+	}
+	pubPEM := pem.EncodeToMemory(
+		&pem.Block{
+			Type:  "RSA PUBLIC KEY",
+			Bytes: pubBytes,
+		},
+	)
 	keyPEM := pem.EncodeToMemory(
 		&pem.Block{
 			Type:  "RSA PRIVATE KEY",
 			Bytes: x509.MarshalPKCS1PrivateKey(key),
-		},
-	)
-	pubPEM := pem.EncodeToMemory(
-		&pem.Block{
-			Type:  "RSA PUBLIC KEY",
-			Bytes: x509.MarshalPKCS1PublicKey(pub.(*rsa.PublicKey)),
 		},
 	)
 	return pubPEM, keyPEM, nil

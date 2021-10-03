@@ -53,3 +53,7 @@ curl -X GET http://localhost:port/domain/{domain}
 ```bash
 curl -X GET http://localhost:port/domain/
 ```
+
+## linux
+
+sudo apt install build-essential

@@ -1,6 +1,8 @@
 package main
 
-import "log"
+import (
+	"log"
+)
 
 func main() {
 	err := run()
@@ -25,7 +27,7 @@ func run() error {
 	// if err != nil {
 	// 	return err
 	// }
-	// dao.AddDomain("laurelview.io", string(pub), string(key))
+	//dao.AddDomain("laurelview.io", string(pub), string(key))
 	err = sendText(dao, "samuel@laurelview.io", "samuel.ventura@yeico.com", "go dkim test", "this is a test!")
 	if err != nil {
 		return err

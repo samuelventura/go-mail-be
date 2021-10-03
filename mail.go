@@ -57,7 +57,7 @@ func sendEmail(dao Dao, from string, to string, subject string, mime string, bod
 			return err
 		}
 	}
-	return fmt.Errorf("no working mx %v", mxs)
+	return fmt.Errorf("no working mx")
 }
 
 func encodeRFC2047(str string) string {
