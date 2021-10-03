@@ -18,6 +18,8 @@ type Dao interface {
 	AddDomain(name string, privkey string, pubkey string) error
 	GetDomain(name string) (*DomainDro, error)
 	DelDomain(name string) error
+	AddMessage(dro *MessageDro) error
+	AddAttempt(dro *AttemptDro) error
 }
 
 func Dialector(driver string, source string) (gorm.Dialector, error) {
@@ -60,35 +62,45 @@ func (dso *daoDso) Close() error {
 }
 
 func (dso *daoDso) GetDomains() ([]string, error) {
-	var rows []DomainDro
-	result := dso.db.Find(&rows)
+	var dros []DomainDro
+	result := dso.db.Find(&dros)
 	if result.Error != nil {
 		return nil, result.Error
 	}
 	names := make([]string, 0, result.RowsAffected)
-	for _, row := range rows {
-		names = append(names, row.Name)
+	for _, dro := range dros {
+		names = append(names, dro.Name)
 	}
 	return names, nil
 }
 
 func (dso *daoDso) AddDomain(name string, pubkey string, privkey string) error {
-	row := &DomainDro{Name: name, PrivateKey: privkey, PublicKey: pubkey}
-	result := dso.db.Create(row)
+	dro := &DomainDro{Name: name, PrivateKey: privkey, PublicKey: pubkey}
+	result := dso.db.Create(dro)
 	return result.Error
 }
 
 func (dso *daoDso) GetDomain(name string) (*DomainDro, error) {
-	row := &DomainDro{}
-	result := dso.db.Where("name = ?", name).First(row)
-	return row, result.Error
+	dro := &DomainDro{}
+	result := dso.db.Where("name = ?", name).First(dro)
+	return dro, result.Error
 }
 
 func (dso *daoDso) DelDomain(name string) error {
-	row := &DomainDro{}
-	result := dso.db.Where("name = ?", name).Delete(row)
+	dro := &DomainDro{}
+	result := dso.db.Where("name = ?", name).Delete(dro)
 	if result.Error == nil && result.RowsAffected != 1 {
 		return fmt.Errorf("row not found")
 	}
+	return result.Error
+}
+
+func (dso *daoDso) AddMessage(dro *MessageDro) error {
+	result := dso.db.Create(dro)
+	return result.Error
+}
+
+func (dso *daoDso) AddAttempt(dro *AttemptDro) error {
+	result := dso.db.Create(dro)
 	return result.Error
 }

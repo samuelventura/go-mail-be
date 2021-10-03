@@ -38,6 +38,10 @@ func run() (func(), error) {
 	if err != nil {
 		return nil, err
 	}
+	hostname, err := os.Hostname()
+	if err != nil {
+		return nil, err
+	}
 	//FIXME gorm setup logging
 	//FIXME gin setup logging
 	driver := getenv("MAIL_DB_DRIVER", "sqlite")
@@ -47,7 +51,7 @@ func run() (func(), error) {
 	if err != nil {
 		return nil, err
 	}
-	closer, err := rest(dao, endpoint)
+	closer, err := rest(dao, endpoint, hostname)
 	if err != nil {
 		return nil, err
 	}

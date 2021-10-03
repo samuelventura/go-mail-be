@@ -1,6 +1,6 @@
 # go-mail-ms
 
-Send only mailer with REST API
+Send only restful mail micro service
 
 - curl is the cli
 - open relay 
@@ -17,27 +17,27 @@ curl -X GET http://127.0.0.1:31650/api/domain/domain.tld
 curl -X DELETE http://127.0.0.1:31650/api/domain/domain.tld
 # list domain names
 curl -X GET http://127.0.0.1:31650/api/domain
+# send mail in text/plain | text/html format
+curl -X POST http://127.0.0.1:31650/api/mail \
+  -H "Mail-From: i@domain.tld" \
+  -H "Mail-To: u@gmail.com" \
+  -H "Mail-Subject: mail subject" \
+  -H "Mail-Mime: text/plain" \
+  --data 'mail body'
 ```
 
-### post message
+## helpers
 
 ```bash
-ssh -L 23
-curl -H "Mail-From: i@i.com" -H "Mail-To: u@u.com" -X POST --data 'email body' http://localhost:port/message
-```
-
-- Log-Level
-- Mail-From
-- Mail-To
-- Mail-Id
-- Mail-Status
-- Content-Type
-  - text/plain; charset=UTF-8
-  - text/html; charset=UTF-8
-
-## linux
-
-```bash
-#for go-sqlite
-sudo apt install build-essential
+go install && go-mail-ms
+sqlite3 ~/go/bin/go-mail-ms.db3 '.tables'
+sqlite3 ~/go/bin/go-mail-ms.db3 '.schema domain_dros'
+sqlite3 ~/go/bin/go-mail-ms.db3 '.schema message_dros'
+sqlite3 ~/go/bin/go-mail-ms.db3 '.schema attempt_dros'
+sqlite3 ~/go/bin/go-mail-ms.db3 'select * from domain_dros'
+sqlite3 ~/go/bin/go-mail-ms.db3 'select * from message_dros'
+sqlite3 ~/go/bin/go-mail-ms.db3 'select * from attempt_dros'
+#for go-sqlite in linux
+sudo apt install build-essentials
+dig gmail.com MX
 ```

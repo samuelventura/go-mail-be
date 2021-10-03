@@ -13,22 +13,17 @@ type DomainDro struct {
 }
 
 type MessageDro struct {
-	ID       string
-	Mime     string
-	Body     string
-	From     string
-	To       string
-	Created  time.Time
-	Updated  time.Time
-	Dropped  *time.Time
-	Sent     *time.Time
-	Attempts int
-	Result   string
+	ID      string
+	From    string
+	To      string
+	Subject string
+	Mime    string
+	Body    string
+	Created time.Time
 }
 
 type AttemptDro struct {
 	ID      string
-	Attempt int
 	Created time.Time
 	Result  string
 }

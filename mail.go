@@ -7,17 +7,22 @@ import (
 	"net/mail"
 	"sort"
 	"strings"
+	"time"
 )
 
 //with display name
-//Jane Doe <jane.doe@gmail.com>
+//User Name <user.name@domain.tld>
 //dig google.com MX
 
-func sendText(dao Dao, from string, to string, subject string, body string) error {
-	return sendEmail(dao, from, to, subject, "text/plain", body)
-}
-
-func sendEmail(dao Dao, from string, to string, subject string, mime string, body string) error {
+func mailSend(dao Dao, id string, from string, to string, subject string, mime string, body string) error {
+	mdro := &MessageDro{ID: id,
+		From: from, To: to,
+		Subject: subject, Mime: mime,
+		Body: body, Created: time.Now()}
+	err := dao.AddMessage(mdro)
+	if err != nil {
+		return err
+	}
 	fromAddress, err := mail.ParseAddress(from)
 	if err != nil {
 		return err
@@ -45,11 +50,20 @@ func sendEmail(dao Dao, from string, to string, subject string, mime string, bod
 	sort.Slice(mxs, func(i, j int) bool {
 		return mxs[i].Pref < mxs[j].Pref
 	})
+	mxsn := make([]string, 0, len(mxs))
 	for _, x := range mxs {
 		//log.Println(x.Host, x.Pref)
+		mxsn = append(mxsn, x.Host)
 		addr := fmt.Sprintf("%s:25", x.Host)
 		dial := false
-		err = smtpSend(addr, fromAddress.Address, []string{toAddress.Address}, email, &dial)
+		err = smtpSend(addr, fromAddress.Address,
+			[]string{toAddress.Address}, email, &dial)
+		result := fmt.Sprintf("host:%s dial:%v error:%v", x.Host, dial, err)
+		adro := &AttemptDro{ID: id, Created: time.Now(), Result: result}
+		err2 := dao.AddAttempt(adro)
+		if err2 != nil {
+			return err2
+		}
 		if dial {
 			continue
 		}
@@ -57,7 +71,7 @@ func sendEmail(dao Dao, from string, to string, subject string, mime string, bod
 			return err
 		}
 	}
-	return fmt.Errorf("no working mx")
+	return fmt.Errorf("no working mx %v", mxsn)
 }
 
 func encodeRFC2047(str string) string {
