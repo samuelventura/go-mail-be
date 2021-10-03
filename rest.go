@@ -21,7 +21,7 @@ func rest(dao Dao, endpoint string, hostname string) (func(), error) {
 		key := http.CanonicalHeaderKey(name)
 		values := r.Header[key]
 		if len(values) != 1 {
-			return "", fmt.Errorf("Invalid header %s %v", name, values)
+			return "", fmt.Errorf("invalid header %s %v", name, values)
 		}
 		return values[0], nil
 	}
