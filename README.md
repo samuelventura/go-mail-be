@@ -1,4 +1,4 @@
-# go-mail-be
+# go-mail-ms
 
 Send only mailer with REST API
 
