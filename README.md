@@ -23,9 +23,9 @@ curl -X GET http://127.0.0.1:31650/api/domain
 curl -X POST http://127.0.0.1:31650/api/mail \
   -H "Mail-From: i@domain.tld" \
   -H "Mail-To: u@gmail.com" \
-  -H "Mail-Subject: mail subject" \
+  -H "Mail-Subject: Mail Subject" \
   -H "Mail-Mime: text/plain" \
-  --data 'mail body'
+  --data "Mail body."
 ```
 
 ## helpers
