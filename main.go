@@ -38,10 +38,6 @@ func run() (func(), error) {
 	if err != nil {
 		return nil, err
 	}
-	hostname, err := os.Hostname()
-	if err != nil {
-		return nil, err
-	}
 	//FIXME gorm setup logging
 	//FIXME gin setup logging
 	logenv("MAIL_SOCKS")
@@ -53,7 +49,7 @@ func run() (func(), error) {
 	if err != nil {
 		return nil, err
 	}
-	closer, err := rest(dao, endpoint, hostname)
+	closer, err := rest(dao, endpoint)
 	if err != nil {
 		return nil, err
 	}

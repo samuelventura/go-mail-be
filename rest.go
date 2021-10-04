@@ -12,8 +12,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func rest(dao Dao, endpoint string, hostname string) (func(), error) {
-	id := NewId(hostname)
+func rest(dao Dao, endpoint string) (func(), error) {
+	id := NewId(gethn())
 	gin.SetMode(gin.ReleaseMode) //remove debug warning
 	router := gin.New()          //remove default logger
 	router.Use(gin.Recovery())   //looks important
