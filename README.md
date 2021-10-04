@@ -39,6 +39,7 @@ ssh -D 31699 proxy.com
 export MAIL_SOCKS=127.0.0.1:31699
 export MAIL_HOSTNAME=proxy.com
 go install && go-mail-ms
+go install && go-mail-ss
 sqlite3 ~/go/bin/go-mail-ms.db3 ".tables"
 sqlite3 ~/go/bin/go-mail-ms.db3 ".schema domain_dros"
 sqlite3 ~/go/bin/go-mail-ms.db3 ".schema message_dros"
