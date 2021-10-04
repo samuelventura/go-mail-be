@@ -38,8 +38,6 @@ func run() (func(), error) {
 	if err != nil {
 		return nil, err
 	}
-	//FIXME gorm setup logging
-	//FIXME gin setup logging
 	logenv("MAIL_SOCKS")
 	logenv("MAIL_HOSTNAME")
 	driver := getenv("MAIL_DB_DRIVER", "sqlite")

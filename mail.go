@@ -43,7 +43,6 @@ func mailSend(dao Dao, id string, from string, to string, subject string, mime s
 	if err != nil {
 		return err
 	}
-	//log.Println(string(email))
 	mxs, err := net.LookupMX(toDomain)
 	if err != nil {
 		return err

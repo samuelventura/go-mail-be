@@ -17,6 +17,8 @@ curl -X GET http://127.0.0.1:31650/api/domain/domain.tld/pub
 curl -X POST http://127.0.0.1:31650/api/domain/domain.tld
 # delete domain
 curl -X DELETE http://127.0.0.1:31650/api/domain/domain.tld
+# import domain in json format
+curl -X POST http://127.0.0.1:31650/api/domain --data @path/file.json
 # list domain names
 curl -X GET http://127.0.0.1:31650/api/domain
 # send mail in text/plain | text/html format

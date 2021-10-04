@@ -6,6 +6,7 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 type daoDso struct {
@@ -33,7 +34,7 @@ func Dialector(driver string, source string) (gorm.Dialector, error) {
 }
 
 func NewDao(driver string, source string) (Dao, error) {
-	config := &gorm.Config{}
+	config := &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)}
 	dialector, err := Dialector(driver, source)
 	if err != nil {
 		return nil, err

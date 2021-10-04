@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -103,6 +104,32 @@ func rest(dao Dao, endpoint string) (func(), error) {
 			"names": names,
 		})
 	})
+	rapi.POST("/domain", func(c *gin.Context) {
+		body, err := ioutil.ReadAll(c.Request.Body)
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		var data map[string]interface{}
+		err = json.Unmarshal([]byte(body), &data)
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		name := data["name"].(string)
+		pubs := data["pub"].(string)
+		keys := data["key"].(string)
+		err = dao.AddDomain(name, pubs, keys)
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(200, gin.H{
+			"name": name,
+			"pub":  pubs,
+			"key":  keys,
+		})
+	})
 	rapi.POST("/domain/:name", func(c *gin.Context) {
 		name := c.Param("name")
 		pub, key, err := keygen()
@@ -120,7 +147,7 @@ func rest(dao Dao, endpoint string) (func(), error) {
 		c.JSON(200, gin.H{
 			"name": name,
 			"pub":  pubs,
-			"key":  key,
+			"key":  keys,
 		})
 	})
 	rapi.DELETE("/domain/:name", func(c *gin.Context) {
