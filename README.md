@@ -13,7 +13,7 @@ Send only restful mail micro service
 curl -X GET http://127.0.0.1:31650/api/domain/domain.tld
 # show domain pub key for dkim dns record
 curl -X GET http://127.0.0.1:31650/api/domain/domain.tld/pub
-# add domain
+# add domain generates rsa key pair
 curl -X POST http://127.0.0.1:31650/api/domain/domain.tld
 # delete domain
 curl -X DELETE http://127.0.0.1:31650/api/domain/domain.tld
@@ -39,13 +39,13 @@ ssh -D 31699 proxy.com
 export MAIL_SOCKS=127.0.0.1:31699
 export MAIL_HOSTNAME=proxy.com
 go install && go-mail-ms
-sqlite3 ~/go/bin/go-mail-ms.db3 '.tables'
-sqlite3 ~/go/bin/go-mail-ms.db3 '.schema domain_dros'
-sqlite3 ~/go/bin/go-mail-ms.db3 '.schema message_dros'
-sqlite3 ~/go/bin/go-mail-ms.db3 '.schema attempt_dros'
-sqlite3 ~/go/bin/go-mail-ms.db3 'select * from domain_dros'
-sqlite3 ~/go/bin/go-mail-ms.db3 'select * from message_dros'
-sqlite3 ~/go/bin/go-mail-ms.db3 'select * from attempt_dros'
+sqlite3 ~/go/bin/go-mail-ms.db3 ".tables"
+sqlite3 ~/go/bin/go-mail-ms.db3 ".schema domain_dros"
+sqlite3 ~/go/bin/go-mail-ms.db3 ".schema message_dros"
+sqlite3 ~/go/bin/go-mail-ms.db3 ".schema attempt_dros"
+sqlite3 ~/go/bin/go-mail-ms.db3 "select * from domain_dros"
+sqlite3 ~/go/bin/go-mail-ms.db3 "select * from message_dros"
+sqlite3 ~/go/bin/go-mail-ms.db3 "select * from attempt_dros"
 #for go-sqlite in linux
 sudo apt install build-essentials
 dig gmail.com MX
