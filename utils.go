@@ -7,6 +7,18 @@ import (
 	"strings"
 )
 
+func gethn() string {
+	hn := os.Getenv("MAIL_HOSTNAME")
+	if len(strings.TrimSpace(hn)) > 0 {
+		return hn
+	}
+	hn, err := os.Hostname()
+	if err != nil {
+		return "localhost"
+	}
+	return hn
+}
+
 func getenv(name string, defval string) string {
 	value := os.Getenv(name)
 	if len(strings.TrimSpace(value)) > 0 {

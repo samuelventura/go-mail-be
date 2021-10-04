@@ -33,6 +33,7 @@ curl -X POST http://127.0.0.1:31650/api/mail \
 ```bash
 ssh -D 31699 proxy.com
 export MAIL_SOCKS=127.0.0.1:31699
+export MAIL_HOSTNAME=proxy.com
 go install && go-mail-ms
 sqlite3 ~/go/bin/go-mail-ms.db3 '.tables'
 sqlite3 ~/go/bin/go-mail-ms.db3 '.schema domain_dros'
@@ -45,3 +46,10 @@ sqlite3 ~/go/bin/go-mail-ms.db3 'select * from attempt_dros'
 sudo apt install build-essentials
 dig gmail.com MX
 ```
+
+# resources
+
+- https://dkimcore.org/
+- https://www.mail-tester.com/
+- https://www.mailgenius.com/
+- https://tldp.org/HOWTO/Spam-Filtering-for-MX/smtpintro.html

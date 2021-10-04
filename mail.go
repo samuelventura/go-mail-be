@@ -3,6 +3,8 @@ package main
 import (
 	"encoding/base64"
 	"fmt"
+	"log"
+	"mime"
 	"net"
 	"net/mail"
 	"sort"
@@ -37,12 +39,12 @@ func mailSend(dao Dao, id string, from string, to string, subject string, mime s
 	if err != nil {
 		return err
 	}
-	email, bodyLength := composeMimeMail(toAddress.String(), fromAddress.String(), subject, mime, body)
+	email, bodyLength := composeMimeMail(id, toAddress.String(), fromAddress.String(), subject, mime, body)
 	err = dkimSign(&email, bodyLength, fromDomain, []byte(fromDomainDro.PrivateKey))
 	if err != nil {
 		return err
 	}
-	//log.Println(string(email))
+	log.Println(string(email))
 	mxs, err := net.LookupMX(toDomain)
 	if err != nil {
 		return err
@@ -71,17 +73,17 @@ func mailSend(dao Dao, id string, from string, to string, subject string, mime s
 	return fmt.Errorf("no working mx %v", mxsn)
 }
 
-func encodeRFC2047(str string) string {
-	// use mail's rfc2047 to encode any string
-	addr := mail.Address{Name: str}
-	return strings.Trim(addr.String(), " <>")
+func escapeHeader(str string) string {
+	return mime.QEncoding.Encode("utf-8", str)
 }
 
-func composeMimeMail(to string, from string, subject string, mime string, body string) ([]byte, uint) {
+func composeMimeMail(id string, to string, from string, subject string, mime string, body string) ([]byte, uint) {
 	var b strings.Builder
+	fmt.Fprintf(&b, "%s: %s\r\n", "Message-Id", id)
+	fmt.Fprintf(&b, "%s: %s\r\n", "Date", time.Now().String())
 	fmt.Fprintf(&b, "%s: %s\r\n", "From", from)
 	fmt.Fprintf(&b, "%s: %s\r\n", "To", to)
-	fmt.Fprintf(&b, "%s: %s\r\n", "Subject", encodeRFC2047(subject))
+	fmt.Fprintf(&b, "%s: %s\r\n", "Subject", escapeHeader(subject))
 	fmt.Fprintf(&b, "%s: %s\r\n", "MIME-Version", "1.0")
 	fmt.Fprintf(&b, "%s: %s\r\n", "Content-Type", fmt.Sprintf("%s; charset=\"utf-8\"", mime))
 	fmt.Fprintf(&b, "%s: %s\r\n", "Content-Transfer-Encoding", "base64")

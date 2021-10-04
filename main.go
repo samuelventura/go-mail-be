@@ -45,6 +45,7 @@ func run() (func(), error) {
 	//FIXME gorm setup logging
 	//FIXME gin setup logging
 	logenv("MAIL_SOCKS")
+	logenv("MAIL_HOSTNAME")
 	driver := getenv("MAIL_DB_DRIVER", "sqlite")
 	source := getenv("MAIL_DB_SOURCE", srcdef)
 	endpoint := getenv("MAIL_ENDPOINT", "127.0.0.1:31650")

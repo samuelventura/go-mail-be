@@ -82,7 +82,7 @@ func NewClient(conn net.Conn, host string) (*Client, error) {
 		text.Close()
 		return nil, err
 	}
-	c := &Client{Text: text, conn: conn, serverName: host, localName: "localhost"}
+	c := &Client{Text: text, conn: conn, serverName: host, localName: gethn()}
 	_, c.tls = conn.(*tls.Conn)
 	return c, nil
 }
