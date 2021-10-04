@@ -152,12 +152,21 @@ func rest(dao Dao, endpoint string) (func(), error) {
 	})
 	rapi.DELETE("/domain/:name", func(c *gin.Context) {
 		name := c.Param("name")
-		err := dao.DelDomain(name)
+		dro, err := dao.GetDomain(name)
 		if err != nil {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
-		c.JSON(200, gin.H{})
+		err = dao.DelDomain(name)
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(200, gin.H{
+			"name": name,
+			"pub":  dro.PublicKey,
+			"key":  dro.PrivateKey,
+		})
 	})
 	listen, err := net.Listen("tcp", endpoint)
 	if err != nil {
