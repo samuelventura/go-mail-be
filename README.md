@@ -31,6 +31,10 @@ curl -X POST http://127.0.0.1:31650/api/mail \
 ## helpers
 
 ```bash
+#MAIL_ENDPOINT=127.0.0.1:31650
+#MAIL_DB_DRIVER=sqlite|postgres
+#MAIL_DB_SOURCE=<driver dependant>
+#https://gorm.io/docs/connecting_to_the_database.html
 ssh -D 31699 proxy.com
 export MAIL_SOCKS=127.0.0.1:31699
 export MAIL_HOSTNAME=proxy.com
