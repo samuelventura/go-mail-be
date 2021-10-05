@@ -15,7 +15,7 @@ type daoDso struct {
 
 type Dao interface {
 	Close() error
-	GetDomains() ([]string, error)
+	GetDomains() (*[]DomainDro, error)
 	AddDomain(name string, privkey string, pubkey string) error
 	GetDomain(name string) (*DomainDro, error)
 	DelDomain(name string) error
@@ -65,17 +65,10 @@ func (dso *daoDso) Close() error {
 	return nil
 }
 
-func (dso *daoDso) GetDomains() ([]string, error) {
+func (dso *daoDso) GetDomains() (*[]DomainDro, error) {
 	var dros []DomainDro
 	result := dso.db.Find(&dros)
-	if result.Error != nil {
-		return nil, result.Error
-	}
-	names := make([]string, 0, result.RowsAffected)
-	for _, dro := range dros {
-		names = append(names, dro.Name)
-	}
-	return names, nil
+	return &dros, result.Error
 }
 
 func (dso *daoDso) AddDomain(name string, pubkey string, privkey string) error {

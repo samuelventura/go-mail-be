@@ -104,10 +104,14 @@ func rest(args Args) (func(), error) {
 		c.Data(200, "text/plain; charset=utf-8", []byte(b.String()))
 	})
 	rapi.GET("/domain", func(c *gin.Context) {
-		names, err := dao.GetDomains()
+		dros, err := dao.GetDomains()
 		if err != nil {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
+		}
+		names := make([]string, 0, len(*dros))
+		for _, dro := range *dros {
+			names = append(names, dro.Name)
 		}
 		c.JSON(200, gin.H{
 			"names": names,
