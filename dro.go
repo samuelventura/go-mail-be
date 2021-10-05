@@ -2,10 +2,6 @@ package main
 
 import "time"
 
-//.tables
-//.dump domain_dros | message_dros | attempt_dros
-//.quit
-
 type DomainDro struct {
 	Name       string `gorm:"primaryKey"`
 	PrivateKey string
