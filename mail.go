@@ -69,8 +69,8 @@ func mailSend(args Args) error {
 		sargs.Set("msg", msg)
 		sargs.Set("dial", &dial)
 		err = smtpSend(sargs)
-		result := fmt.Sprintf("host:%s dial:%v error:%v", x.Host, dial, err)
-		adro := &AttemptDro{Mid: id, Created: time.Now(), Result: result}
+		adro := &AttemptDro{Mid: id, Created: time.Now(),
+			Addr: addr, Dial: dial, Error: err.Error()}
 		err2 := dao.AddAttempt(adro)
 		if err2 != nil {
 			return err2

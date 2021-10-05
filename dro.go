@@ -21,5 +21,7 @@ type MessageDro struct {
 type AttemptDro struct {
 	Mid     string
 	Created time.Time
-	Result  string
+	Addr    string
+	Dial    bool
+	Error   string
 }
