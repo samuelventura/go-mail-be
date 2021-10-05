@@ -15,31 +15,38 @@ import (
 //User Name <user.name@domain.tld>
 //dig google.com MX
 
-func mailSend(dao Dao, id string, from string, to string, subject string, mime string, body string) error {
+func mailSend(args Args) error {
+	id := args.Get("id").(string)
+	from := args.Get("from").(string)
+	to := args.Get("to").(string)
+	subject := args.Get("subject").(string)
+	mime := args.Get("mime").(string)
+	body := args.Get("body").([]byte)
+	dao := args.Get("dao").(Dao)
 	mdro := &MessageDro{Mid: id,
 		From: from, To: to,
 		Subject: subject, Mime: mime,
-		Body: body, Created: time.Now()}
+		Body: string(body), Created: time.Now()}
 	err := dao.AddMessage(mdro)
 	if err != nil {
 		return err
 	}
-	fromAddress, err := mail.ParseAddress(from)
+	afrom, err := mail.ParseAddress(from)
 	if err != nil {
 		return err
 	}
-	toAddress, err := mail.ParseAddress(to)
+	ato, err := mail.ParseAddress(to)
 	if err != nil {
 		return err
 	}
-	toDomain := strings.Split(toAddress.Address, "@")[1]
-	fromDomain := strings.Split(fromAddress.Address, "@")[1]
+	toDomain := strings.Split(ato.Address, "@")[1]
+	fromDomain := strings.Split(afrom.Address, "@")[1]
 	fromDomainDro, err := dao.GetDomain(fromDomain)
 	if err != nil {
 		return err
 	}
-	email, bodyLength := composeMimeMail(id, toAddress.String(), fromAddress.String(), subject, mime, body)
-	err = dkimSign(&email, bodyLength, fromDomain, []byte(fromDomainDro.PrivateKey))
+	msg, bodyLen := mailPack(id, ato.String(), afrom.String(), subject, mime, body)
+	err = dkimSign(&msg, bodyLen, fromDomain, []byte(fromDomainDro.PrivateKey))
 	if err != nil {
 		return err
 	}
@@ -55,8 +62,13 @@ func mailSend(dao Dao, id string, from string, to string, subject string, mime s
 		mxsn = append(mxsn, x.Host)
 		addr := fmt.Sprintf("%s:25", x.Host)
 		dial := false
-		err = smtpSend(addr, fromAddress.Address,
-			[]string{toAddress.Address}, email, &dial)
+		sargs := args.Clone()
+		sargs.Set("addr", addr)
+		sargs.Set("from", afrom.Address)
+		sargs.Set("to", []string{ato.Address})
+		sargs.Set("msg", msg)
+		sargs.Set("dial", &dial)
+		err = smtpSend(sargs)
 		result := fmt.Sprintf("host:%s dial:%v error:%v", x.Host, dial, err)
 		adro := &AttemptDro{Mid: id, Created: time.Now(), Result: result}
 		err2 := dao.AddAttempt(adro)
@@ -75,18 +87,19 @@ func escapeHeader(str string) string {
 	return mime.QEncoding.Encode("utf-8", str)
 }
 
-func composeMimeMail(id string, to string, from string, subject string, mime string, body string) ([]byte, uint) {
+func mailPack(id string, to string, from string, subject string, mime string, body []byte) ([]byte, uint) {
 	var b strings.Builder
+	//Date: Mon, 04 Oct 2021 21:46:06 +0000
+	const RFC822 = "Mon, 02 Jan 2006 15:04:05 -0700"
 	fmt.Fprintf(&b, "%s: %s\r\n", "Message-Id", id)
-	fmt.Fprintf(&b, "%s: %s\r\n", "Date", time.Now().String())
+	fmt.Fprintf(&b, "%s: %s\r\n", "Date", time.Now().Format(RFC822))
 	fmt.Fprintf(&b, "%s: %s\r\n", "From", from)
 	fmt.Fprintf(&b, "%s: %s\r\n", "To", to)
 	fmt.Fprintf(&b, "%s: %s\r\n", "Subject", escapeHeader(subject))
 	fmt.Fprintf(&b, "%s: %s\r\n", "MIME-Version", "1.0")
 	fmt.Fprintf(&b, "%s: %s\r\n", "Content-Type", fmt.Sprintf("%s; charset=\"utf-8\"", mime))
 	fmt.Fprintf(&b, "%s: %s\r\n", "Content-Transfer-Encoding", "base64")
-	bytes := []byte(body)
 	b.WriteString("\r\n")
-	b.WriteString(base64.StdEncoding.EncodeToString(bytes))
-	return []byte(b.String()), uint(len(bytes))
+	b.WriteString(base64.StdEncoding.EncodeToString(body))
+	return []byte(b.String()), uint(len(body))
 }

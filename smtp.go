@@ -21,37 +21,89 @@ import (
 	"io"
 	"net"
 	"net/textproto"
-	"os"
 	"strings"
 	"time"
 
 	"golang.org/x/net/proxy"
 )
 
-// A Client represents a client connection to an SMTP server.
-type Client struct {
-	// Text is the textproto.Conn used by the Client. It is exported to allow for
-	// clients to add extensions.
-	Text *textproto.Conn
-	// keep a reference to the connection so it can be used to create a TLS
-	// connection later
-	conn net.Conn
-	// whether the Client is using TLS
-	tls        bool
-	serverName string
-	// map of supported extensions
-	ext map[string]string
-	// supported auth mechanisms
-	auth       []string
-	localName  string // the name to use in HELO/EHLO
-	didHello   bool   // whether we've said HELO/EHLO
-	helloError error  // the error from the hello
+// smtpSend connects to the server at addr, switches to TLS if
+// possible, authenticates with the optional mechanism a if possible,
+// and then sends an email from address from, to addresses to, with
+// message msg.
+// The addr must include a port, as in "mail.example.com:smtp".
+//
+// The addresses in the to parameter are the SMTP RCPT addresses.
+//
+// The msg parameter should be an RFC 822-style email with headers
+// first, a blank line, and then the message body. The lines of msg
+// should be CRLF terminated. The msg headers should usually include
+// fields such as "From", "To", "Subject", and "Cc".  Sending "Bcc"
+// messages is accomplished by including an email address in the to
+// parameter but not including it in the msg headers.
+//
+// The smtpSend function and the net/smtp package are low-level
+// mechanisms and provide no support for DKIM signing, MIME
+// attachments (see the mime/multipart package), or other mail
+// functionality. Higher-level packages exist outside of the standard
+// library.
+func smtpSend(args Args) error {
+	addr := args.Get("addr").(string)
+	from := args.Get("from").(string)
+	to := args.Get("to").([]string)
+	msg := args.Get("msg").([]byte)
+	dial := args.Get("dial").(*bool)
+	socks := args.Get("socks").(string)
+	hostname := args.Get("hostname").(string)
+	if err := validateLine(from); err != nil {
+		return err
+	}
+	for _, recp := range to {
+		if err := validateLine(recp); err != nil {
+			return err
+		}
+	}
+	c, err := smtpDial(addr, socks, hostname)
+	if err != nil {
+		*dial = true
+		return err
+	}
+	defer c.Close()
+	if err = c.hello(); err != nil {
+		return err
+	}
+	if ok, _ := c.Extension("STARTTLS"); ok {
+		config := &tls.Config{ServerName: c.serverName}
+		if err = c.StartTLS(config); err != nil {
+			return err
+		}
+	}
+	if err = c.Mail(from); err != nil {
+		return err
+	}
+	for _, addr := range to {
+		if err = c.Rcpt(addr); err != nil {
+			return err
+		}
+	}
+	w, err := c.Data()
+	if err != nil {
+		return err
+	}
+	_, err = w.Write(msg)
+	if err != nil {
+		return err
+	}
+	err = w.Close()
+	if err != nil {
+		return err
+	}
+	return c.Quit()
 }
 
 // smtpDial returns a new Client connected to an SMTP server at addr.
 // The addr must include a port, as in "mail.example.com:smtp".
-func smtpDial(addr string) (*Client, error) {
-	socks := os.Getenv("MAIL_SOCKS")
+func smtpDial(addr string, socks string, localName string) (*Client, error) {
 	if len(socks) > 0 {
 		//no timeout support, for testing purposes only
 		dialer, err := proxy.SOCKS5("tcp", socks, nil, proxy.Direct)
@@ -62,27 +114,48 @@ func smtpDial(addr string) (*Client, error) {
 		if err != nil {
 			return nil, err
 		}
-		host, _, _ := net.SplitHostPort(addr)
-		return NewClient(conn, host)
+		remoteName, _, _ := net.SplitHostPort(addr)
+		return NewClient(conn, remoteName, localName)
 	}
 	conn, err := net.DialTimeout("tcp", addr, 10*time.Second)
 	if err != nil {
 		return nil, err
 	}
-	host, _, _ := net.SplitHostPort(addr)
-	return NewClient(conn, host)
+	remoteName, _, _ := net.SplitHostPort(addr)
+	return NewClient(conn, remoteName, localName)
+}
+
+// A Client represents a client connection to an SMTP server.
+type Client struct {
+	// Text is the textproto.Conn used by the Client. It is exported to allow for
+	// clients to add extensions.
+	Text *textproto.Conn
+	// keep a reference to the connection so it can be used to create a TLS
+	// connection later
+	conn net.Conn
+	// whether the Client is using TLS
+	tls bool
+	// remove server name
+	serverName string
+	// map of supported extensions
+	ext map[string]string
+	// supported auth mechanisms
+	auth       []string
+	localName  string // the name to use in HELO/EHLO
+	didHello   bool   // whether we've said HELO/EHLO
+	helloError error  // the error from the hello
 }
 
 // NewClient returns a new Client using an existing connection and host as a
 // server name to be used when authenticating.
-func NewClient(conn net.Conn, host string) (*Client, error) {
+func NewClient(conn net.Conn, serverName string, localName string) (*Client, error) {
 	text := textproto.NewConn(conn)
 	_, _, err := text.ReadResponse(220)
 	if err != nil {
 		text.Close()
 		return nil, err
 	}
-	c := &Client{Text: text, conn: conn, serverName: host, localName: gethn()}
+	c := &Client{Text: text, conn: conn, serverName: serverName, localName: localName}
 	_, c.tls = conn.(*tls.Conn)
 	return c, nil
 }
@@ -266,73 +339,6 @@ func (c *Client) Data() (io.WriteCloser, error) {
 		return nil, err
 	}
 	return &dataCloser{c, c.Text.DotWriter()}, nil
-}
-
-// smtpSend connects to the server at addr, switches to TLS if
-// possible, authenticates with the optional mechanism a if possible,
-// and then sends an email from address from, to addresses to, with
-// message msg.
-// The addr must include a port, as in "mail.example.com:smtp".
-//
-// The addresses in the to parameter are the SMTP RCPT addresses.
-//
-// The msg parameter should be an RFC 822-style email with headers
-// first, a blank line, and then the message body. The lines of msg
-// should be CRLF terminated. The msg headers should usually include
-// fields such as "From", "To", "Subject", and "Cc".  Sending "Bcc"
-// messages is accomplished by including an email address in the to
-// parameter but not including it in the msg headers.
-//
-// The smtpSend function and the net/smtp package are low-level
-// mechanisms and provide no support for DKIM signing, MIME
-// attachments (see the mime/multipart package), or other mail
-// functionality. Higher-level packages exist outside of the standard
-// library.
-func smtpSend(addr string, from string, to []string, msg []byte, dial *bool) error {
-	if err := validateLine(from); err != nil {
-		return err
-	}
-	for _, recp := range to {
-		if err := validateLine(recp); err != nil {
-			return err
-		}
-	}
-	c, err := smtpDial(addr)
-	if err != nil {
-		*dial = true
-		return err
-	}
-	defer c.Close()
-	if err = c.hello(); err != nil {
-		return err
-	}
-	if ok, _ := c.Extension("STARTTLS"); ok {
-		config := &tls.Config{ServerName: c.serverName}
-		if err = c.StartTLS(config); err != nil {
-			return err
-		}
-	}
-	if err = c.Mail(from); err != nil {
-		return err
-	}
-	for _, addr := range to {
-		if err = c.Rcpt(addr); err != nil {
-			return err
-		}
-	}
-	w, err := c.Data()
-	if err != nil {
-		return err
-	}
-	_, err = w.Write(msg)
-	if err != nil {
-		return err
-	}
-	err = w.Close()
-	if err != nil {
-		return err
-	}
-	return c.Quit()
 }
 
 // Extension reports whether an extension is support by the server.

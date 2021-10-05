@@ -13,8 +13,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func rest(dao Dao, endpoint string) (func(), error) {
+func rest(args Args) (func(), error) {
 	id := NewId(gethn())
+	dao := args.Get("dao").(Dao)
+	endpoint := args.Get("endpoint").(string)
 	gin.SetMode(gin.ReleaseMode) //remove debug warning
 	router := gin.New()          //remove default logger
 	router.Use(gin.Recovery())   //looks important
@@ -54,7 +56,14 @@ func rest(dao Dao, endpoint string) (func(), error) {
 			c.JSON(400, gin.H{"id": mid, "error": err.Error()})
 			return
 		}
-		err = mailSend(dao, mid, mfrom, mto, msubject, mmime, string(mbody))
+		margs := args.Clone()
+		margs.Set("id", mid)
+		margs.Set("from", mfrom)
+		margs.Set("to", mto)
+		margs.Set("subject", msubject)
+		margs.Set("mime", mmime)
+		margs.Set("body", mbody)
+		err = mailSend(margs)
 		if err != nil {
 			c.JSON(400, gin.H{"id": mid, "error": err.Error()})
 			return

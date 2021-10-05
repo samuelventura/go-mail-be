@@ -23,7 +23,9 @@ type Dao interface {
 	AddAttempt(dro *AttemptDro) error
 }
 
-func Dialector(driver string, source string) (gorm.Dialector, error) {
+func dialector(env Args) (gorm.Dialector, error) {
+	driver := env.Get("driver").(string)
+	source := env.Get("source").(string)
 	switch driver {
 	case "sqlite":
 		return sqlite.Open(source), nil
@@ -33,9 +35,10 @@ func Dialector(driver string, source string) (gorm.Dialector, error) {
 	return nil, fmt.Errorf("unknown driver %s", driver)
 }
 
-func NewDao(driver string, source string) (Dao, error) {
-	config := &gorm.Config{Logger: logger.Default.LogMode(logger.Silent)}
-	dialector, err := Dialector(driver, source)
+func NewDao(env Args) (Dao, error) {
+	mode := logger.Default.LogMode(logger.Silent)
+	config := &gorm.Config{Logger: mode}
+	dialector, err := dialector(env)
 	if err != nil {
 		return nil, err
 	}

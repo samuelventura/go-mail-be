@@ -33,6 +33,7 @@ curl -X POST http://127.0.0.1:31650/api/mail \
 ## helpers
 
 ```bash
+#MAIL_LOGS=/var/log
 #MAIL_ENDPOINT=127.0.0.1:31650
 #MAIL_DB_DRIVER=sqlite|postgres
 #MAIL_DB_SOURCE=<driver dependant>
@@ -57,6 +58,7 @@ dig gmail.com MX
 # resources
 
 - https://dkimcore.org/
+- http://www.open-spf.org/
 - https://www.mail-tester.com/
 - https://www.mailgenius.com/
 - https://tldp.org/HOWTO/Spam-Filtering-for-MX/smtpintro.html

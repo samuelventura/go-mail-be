@@ -16,7 +16,7 @@ func main() {
 
 	log.Println("starting...")
 	defer log.Println("exit")
-	closer, err := run()
+	closer, err := run(args())
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -33,21 +33,31 @@ func main() {
 	}
 }
 
-func run() (func(), error) {
-	srcdef, err := withext("db3")
+func args() Args {
+	source, err := withext("db3")
+	if err != nil {
+		log.Fatal(err)
+	}
+	hostname, err := os.Hostname()
+	if err != nil {
+		log.Fatal(err)
+	}
+	args := NewArgs()
+	args.Set("socks", getenv("MAIL_SOCKS", ""))
+	args.Set("hostname", getenv("MAIL_HOSTNAME", hostname))
+	args.Set("source", getenv("MAIL_DB_SOURCE", source))
+	args.Set("driver", getenv("MAIL_DB_DRIVER", "sqlite"))
+	args.Set("endpoint", getenv("MAIL_ENDPOINT", "127.0.0.1:31650"))
+	return args
+}
+
+func run(args Args) (func(), error) {
+	dao, err := NewDao(args)
 	if err != nil {
 		return nil, err
 	}
-	logenv("MAIL_SOCKS")
-	logenv("MAIL_HOSTNAME")
-	driver := getenv("MAIL_DB_DRIVER", "sqlite")
-	source := getenv("MAIL_DB_SOURCE", srcdef)
-	endpoint := getenv("MAIL_ENDPOINT", "127.0.0.1:31650")
-	dao, err := NewDao(driver, source)
-	if err != nil {
-		return nil, err
-	}
-	closer, err := rest(dao, endpoint)
+	args.Set("dao", dao)
+	closer, err := rest(args)
 	if err != nil {
 		return nil, err
 	}
