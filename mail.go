@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/base64"
 	"fmt"
+	"log"
 	"mime"
 	"net"
 	"net/mail"
@@ -70,9 +71,10 @@ func mailSend(args Args) error {
 		sargs.Set("dial", &dial)
 		err = smtpSend(sargs)
 		adro := &AttemptDro{Mid: id, Created: time.Now(),
-			Addr: addr, Dial: dial, Error: err.Error()}
+			Addr: addr, Dial: dial, Error: fmt.Sprint(err)}
 		err2 := dao.AddAttempt(adro)
 		if err2 != nil {
+			log.Panicln(err2)
 			return err2
 		}
 		if dial {
